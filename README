@@ -8,7 +8,7 @@ database-independent nsdb module and the API of a particular DBMS.  A
 database driver's job is to open connections, send SQL statements, and
 translate the results into the form used by nsdb.  In this case, the
 driver is for the PostgreSQL ORDBMS from The PostgreSQL Global Development
-Group.  This is the official driver for the ACS-PG project. PostgreSQL can be
+Group.  This is the official driver for the OpenACS project. PostgreSQL can be
 downloaded and installed on most Unix systems.  To use this driver, you
 must have PostgreSQL installed on your system.  For more information on
 PostgreSQL or to download the code, open:
@@ -44,6 +44,7 @@ Contributors to this file include:
 	Keith Pasket		(SDL/USU)
 	Scott Cannon, Jr.	(SDL/USU)
         Dan Wickstrom           <danw@rtp.ericsson.se>
+	Scott S. Goodwin	<scott@scottg.net>
 
 Original example driver by Jim Davidson
 

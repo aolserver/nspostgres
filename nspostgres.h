@@ -2,7 +2,7 @@
  * The contents of this file are subject to the AOLserver Public License
  * Version 1.1 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
- * http://aolserver.lcs.mit.edu/.
+ * http://aolserver.com/.
  *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
@@ -29,7 +29,7 @@
  * $Header$
  */
 
-/* NOTE: for ACS/pg use, you need to define FOR_ACS_USE! */
+/* NOTE: for OpenACS use, you need to define FOR_ACS_USE! */
 
 #include "ns.h"
 /* If we're under AOLserver 3, we don't need some things.
@@ -46,117 +46,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-
-/*-
-
-What is this?
-------------
-
-This module implements a simple AOLserver database services driver.  A
-database driver is a module which interfaces between the AOLserver
-database-independent nsdb module and the API of a particular DBMS.  A
-database driver's job is to open connections, send SQL statements, and
-translate the results into the form used by nsdb.  In this case, the
-driver is for the PostgreSQL ORDBMS from The PostgreSQL Global Development
-Group.  This is the official driver for the ACS-PG project. PostgreSQL can be
-downloaded and installed on most Unix systems.  To use this driver, you
-must have PostgreSQL installed on your system.  For more information on
-PostgreSQL or to download the code, open:
-
-        http://www.postgresql.org
-
-
-How does it work?
-----------------
-
-Driver modules look much like ordinary AOLserver modules but are
-loaded differently.  Instead of being listed with other modules in the
-[ns\server\<server-name>\modules] configuration section, a database
-driver is listed in the [ns\db\drivers] section and nsdb does
-the loading.  The database driver initialization function normally does
-little more than call the nsdb Ns_DbRegisterDriver() function with an
-array of pointers to functions.  The functions are then later used by
-nsdb to open database connections and send and process queries.  This
-architecture is much like ODBC on Windows.  In addition to open,
-select, and getrow functions, the driver also provides system catalog
-functions and a function for initializing a virtual server.  The
-virtual server initialization function is called each time nsdb is
-loaded into a virtual server.  In this case, the server initialization
-function, Ns_PgServerInit, adds the "ns_pg" Tcl command to the server's
-Tcl interpreters which can be used to fetch information about an active
-PostgreSQL connection in a Tcl script.
-
-Don Baccus (DRB) added the following improvements in December, 1999:
-
-1. When a handle's returned to the pool and the handle's in
-   transaction mode, the driver rolls back the transaction.
-
-2. Reopens crashed backends, retrying query if told to by postmaster.
-
-3. ns_db ntuples now returns the number of tuples affected by "insert",
-   "update", and "delete" queries (only worked for select before).
-
-4. Supports the following, assuming you've named your driver "postgres" in
-   your .ini file:
-
-   [ns/db/driver/postgres]
-   datestyle=iso
-
-   (or any legal Postgres datestyle)
-
-5. The driver's name's been changed from "Postgre95" to "PostgreSQL", the
-   current official name of the database software.
-
-*/
-
-/* Added reimplementation of ns_column and ns_table commands -- adapted
-   the code in the ArsDigita Oracle driver to work in the PostgreSQL driver's
-   skeleton.  Will revisit this implementation for cleanup once functionality
-   fully verified.  Lamar Owen <lamar.owen@wgcr.org> Feb 6, 2000. */
-
-/* Merge with AOLserver 3.0rc1's nspostgres.c -- more error checking from
-   Jan Wieck.
-
-   Also, changed behavior: if the datestyle parameter is not set in config
-   file, set it to be 'iso' by default -- it was not getting correctly set.
-
-   Wrapped ACS stuff inside FOR_ACS_USE #ifdef's.
-
-   3-21-2000 lamar.owen@wgcr.org */
-
-/* 2000-03-28: added check for the existence of the PGDATESTYLE envvar
-   and do no setting of datestyle if it exists.  lamar.owen@wgcr.org */
-
-/* 2000-03-28: take two: make datestyle parameter override envvar, and make 
-   the default go away. LRO */
-
-/* 2000-05-04: Added blob_select_file command.  Needed an inverse to
-   blob_dml_file to support porting of webmail. danw@rtp.ericsson.se*/
-
-/* 2000-12-30: Added bind variable emulation to support acs 4.0 porting.
-   dcwickstrom@earthlink.net*/
-
-/* 2001-03-??: Added automatic quoting of emulated bind variables in order
-   to make it compatible with the analogous routine in the Oracle driver.
-   dhogaza@pacifier.com*/
-
-/* 2001-04-14: Added Henry Minsky's patch which echoes changes in the
-   Oracle driver to stream blob data directly to the connection 
-   rather than first spool to a temp file.  Since the call to return
-   the file to the user doesn't return until after the operation is
-   complete, spooling was a waste of time and resource.
-   dhogaza@pacifier.com*/
-
-/* Contributors to this file include:
-
-	Don Baccus		<dhogaza@pacifier.com>
-	Lamar Owen		<lamar.owen@wgcr.org>
-	Jan Wieck		<wieck@debis.com>
-	Keith Pasket		(SDL/USU)
-	Scott Cannon, Jr.	(SDL/USU)
-        Dan Wickstrom           <danw@rtp.ericsson.se>
-
-	Original example driver by Jim Davidson */
 
 #define DRIVER_NAME             "PostgreSQL"
 #define OID_QUOTED_STRING       " oid = '"
@@ -178,7 +67,7 @@ static int      Ns_PgGetRow(Ns_DbHandle *handle, Ns_Set *row);
 static int      Ns_PgFlush(Ns_DbHandle *handle);
 
 /* Clunky construct follows :-) We want these statics for either AS 2.3
-   OR for ACS/pg under AS3 -- plain AS3 doesn't get these */
+   OR for OpenACS under AS3 -- plain AS3 doesn't get these */
 
 /* Hack out the extended_table_info stuff if AOLserver 3, and add in our
    driver's reimplement of ns_table and ns_column */

@@ -1,3 +1,13 @@
+2002-12-18  Lamar Owen <lamar.owen@wgcr.org>
+
+	* nspostgres.h and nspostgres.c: corrected some misinformation
+	in the comments.
+
+	* nspostgres.h: ChangeLog not in comments anymore; neither is the
+	contributor list.
+
+	* corrected contributor list in README.
+
 2002-12-13  Scott S. Goodwin  <scott@scottg.net>
 
 	* Makefile: Added targets for tagging and file release. Do a 'make
