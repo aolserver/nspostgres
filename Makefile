@@ -154,7 +154,7 @@ check-env:
 	    echo "** "; \
 	    echo "** OpenACS users should also set ACS=1"; \
 	    echo "** "; \
-	    echo "** AOLserver 3.x users should set AS3=1."; \    
+	    echo "** AOLserver 3.x users should set AS3=1"; \
 	    echo "** "; \
 	    exit 1; \
 	fi
