@@ -35,10 +35,19 @@
 #      PostgreSQL Database Driver for AOLserver
 #
 
+POSTGRES=LSB
+
 ifdef INST
-    NSHOME ?= $(INST)
+  NSHOME ?= $(INST)
 else
-    NSHOME ?= ../aolserver
+  ifdef NSBUILD
+    NSHOME=..
+  else
+    NSHOME=/usr/local/aolserver
+    ifneq ( $(shell [ -f $(NSHOME)/include/Makefile.module ] && echo ok), ok)
+      NSHOME ?= ../aolserver
+    endif
+  endif
 endif
 
 #
@@ -52,7 +61,7 @@ VER_ = $(subst .,_,$(VER))
 #
 ifeq ($(POSTGRES),LSB)
     PGLIB = /usr/lib
-    PGINC = /usr/include
+    PGINC = /usr/include/pgsql
 else
     PGLIB = $(POSTGRES)/lib
     PGINC = $(POSTGRES)/include
