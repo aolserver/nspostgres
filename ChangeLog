@@ -1,10 +1,21 @@
+2003-03-29  Scott Goodwin  <scott@scottg.net>
+
+	* Makefile: Fixed problem where if AS3 was not set, -lnsdb was not
+	being added to library list.
+
+	* Makefile: Added OPENSSL setting to allow you to specify where
+	OPENSSL is installed. This is required when compiling nspostgres
+	against a PostgreSQL installation that has been compiled with OpenSSL.
+	If you get lots of undefined symbols that look like _SSL, _PEM and so
+	on, then you need this flag.
+
 2004-02-04  Lamar Owen <lowen@pari.edu>
 	* Roll a 4.0 tarball.
 	* Tag the 4.0 release.
 
 2003-10-02  Scott Goodwin  <scott@scottg.net>
 
-        * Makefile: extra spaces at the end of one of the lines in the
+	* Makefile: extra spaces at the end of one of the lines in the
         check-env target were causing make failure. Error given was:
 
         /bin/sh: -c: line 2: syntax error: unexpected end of file

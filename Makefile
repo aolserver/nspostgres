@@ -79,9 +79,15 @@ HDRS      = nspostgres.h
 MODLIBS   = -L$(PGLIB) -lpq
 
 ifndef AS3
-ifeq ($(AS3),1)
     MODLIBS  +=  -lnsdb
 endif
+
+#
+# If PostgreSQL was compiled with OpenSSL support, you'll need to point the
+# OpenSSL installation.
+#
+ifdef OPENSSL
+    MODLIBS += -L$(OPENSSL)/lib -lssl -lcrypto
 endif
 
 CFLAGS   += -DBIND_EMULATION -I$(PGINC)
@@ -155,6 +161,9 @@ check-env:
 	    echo "** OpenACS users should also set ACS=1"; \
 	    echo "** "; \
 	    echo "** AOLserver 3.x users should set AS3=1"; \
+	    echo "** "; \
+	    echo "** If PostgreSQL was compiled with SSL support, you also need:"; \
+	    echo "**        OPENSSL=/path/to/openssl"; \
 	    echo "** "; \
 	    exit 1; \
 	fi
