@@ -1,3 +1,7 @@
+2004-02-04  Lamar Owen <lowen@pari.edu>
+	* Roll a 4.0 tarball.
+	* Tag the 4.0 release.
+
 2003-10-02  Scott Goodwin  <scott@scottg.net>
 
         * Makefile: extra spaces at the end of one of the lines in the

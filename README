@@ -53,4 +53,5 @@ DEVELOPER'S GUIDE:
 
 Run 'make help' for developer information.
 
+See the Makefile for further information on building this module.
 
