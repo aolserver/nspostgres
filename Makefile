@@ -41,7 +41,7 @@ HDRS      = nspostgres.h
 #
 # Libraries required by this module
 #
-MODLIBS   = -L$(PGLIB)/lib -lpq
+MODLIBS   = -L$(PGLIB) -lpq
 CFLAGS   += -DBIND_EMULATION -I$(PGINC)/include
 
 #
