@@ -1,5 +1,8 @@
 2002-12-13  Scott S. Goodwin  <scott@scottg.net>
 
+	* Makefile: Added targets for tagging and file release. Do a 'make
+	help' to see it.
+
 	* OVERWRITE: I have taken the latest OpenACS version of their postgres
 	module and overwritten the "pre-don" version. Had to take postgres.c
 	and split it into nspostgres.c and .h. Updated nspostgres Makefile to
