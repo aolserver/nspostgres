@@ -83,7 +83,9 @@ CFLAGS   += -DBIND_EMULATION -I$(PGINC)
 # ACS users should set ACS=1
 #
 ifdef ACS
+ifeq ($(ACS),1)
     CFLAGS   +=  -DFOR_ACS_USE
+endif
 endif
 
 include  $(NSHOME)/include/Makefile.module
