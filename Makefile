@@ -27,78 +27,35 @@ else
 NSHOME ?= ../aolserver
 endif
 
-PGLIB = $(POSTGRES)/lib
-PGINC = $(POSTGRES)/include
+PGLIB       = $(POSTGRES)/lib
+PGINC       = $(POSTGRES)/include
 
-MODULE      = nspostgres.so
+MOD      = nspostgres.so
 OBJS        = nspostgres.o
 EXTRA_OBJS  = $(PGLIB)/libpq.so
 HDRS        =
 
-#=======================================
-
-INSTALL=/home/nsadmin
-
 CC=gcc
-COPTS=-Wall -fpic -shared -I/usr/local/pgsql/include -I/home/aolserver/include -I-/usr/include
-
-# Debian Linux with deb AOLserver & PostgreSQL
-#CC=gcc
-#PGLIB=/usr/lib
-#PGINC=/usr/include/postgresql
-#NSINC=/usr/include/aolserver
-#COPTS=-fpic -shared -I$(PGINC) -I$(NSINC) -I-/usr/include
-
-# RedHat Linux with RPM PostgreSQL
-CC=gcc
-#PGLIB=/usr/lib
-#PGINC=/usr/include/pgsql
-COPTS=-fpic -shared -I$(PGINC) -I$(NSHOME)/include -I-/usr/include
-
-# Solaris 2.4
-#CC=/opt/SUNWspro/bin/cc
-#COPTS=-g -mt -Xa
-#LDFLAGS=-dy -G
-
-# Alpha Digital Unix 3.2
-#CC=cc
-#COPTS=-g -D_REENTRANT -threads
-#LDFLAGS=-shared -expect_unresolved '*'
-
-# HP/UX
-#CC=cc
-#COPTS=-g -Ae -D_REENTRANT +z
-#LDFLAGS=-b
-
-# SGI Irix 5.3
-#CC=cc
-#COPTS=-g -D_SGI_MP_SOURCE
-#LDFLAGS=-shared
-
-# FreeBSD 3
-# The make install target isn't what you want---just copy postgres.so to
-# /usr/local/libexec/aolserver
-#COPTS=-g -Wall -fpic -pthread -D_THREAD_SAFE -I/usr/local/include/aolserver -I/usr/local/pgsql/include
-#LDFLAGS=-pthread -Wl,-E
-
-# You should not need to edit anything below this line.
-
-CFLAGS=-DFOR_ACS_USE -DBIND_EMULATION -I$(NSHOME)/include $(COPTS)
+COPTS=-fPIC -shared -I$(PGINC) -I$(NSHOME)/include -I-/usr/include
+#CFLAGS=-DFOR_ACS_USE -DBIND_EMULATION -I$(NSHOME)/include $(COPTS)
+CFLAGS= -DBIND_EMULATION -I$(NSHOME)/include $(COPTS)
 LDFLAGS=-shared -I$(PGINC) -I$(NSHOME)/include -I-/usr/include
 
-all: $(MODULE)
+include  $(NSHOME)/include/Makefile.module
 
-$(MODULE): $(OBJS)
-	gcc $(LDFLAGS) -o $(MODULE) $(OBJS) $(EXTRA_OBJS)
+#all: $(MOD)
+#
+#$(MOD): $(OBJS)
+	#gcc $(LDFLAGS) -o $(MOD) $(OBJS) $(EXTRA_OBJS)
+#
+#install: $(MOD)
+#	cp $(MOD) $(INSTALL)/bin/
+#	chmod +x $(INSTALL)/bin/$(MOD)
+#
+#clean:
+#	rm -f *.o *.so
 
-install: $(MODULE)
-	cp $(MODULE) $(INSTALL)/bin/
-	chmod +x $(INSTALL)/bin/$(MODULE)
-
-clean:
-	rm -f *.o *.so
-
-# Extra stuff to make sure that OPENSSL is set.
+# Extra stuff to make sure that POSTGRES is set.
 
 nspostgres.c: check-env
 
