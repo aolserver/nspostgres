@@ -1,4 +1,9 @@
-2002-06-02  Scott Goodwin  <scott@scottg.net>
+2002-07-01  Scott S. Goodwin  <scott@scottg.net>
+
+	* all: reset file perms to 0644 for all files except the CVS
+	directory.
+
+2002-06-02  Scott S. Goodwin  <scott@scottg.net>
 
 	* nspostgres.c: Incorporated latest patches from the postgres
 	module that the OpenACS team maintains.
