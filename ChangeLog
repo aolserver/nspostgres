@@ -1,0 +1,89 @@
+2001-08-31  Scott Goodwin  <scott@scottg.net>
+
+	* ChangeLog: Created this ChangeLog file from the notes in the
+	postgres.c file of the original source. This nspostgres module was
+	created from the pgdriver2.0 sources found at OpenACS.org.
+
+2001-04-14  Don Baccus  <dhogaza@pacifier.com>
+
+	* Added Henry Minsky's patch which echoes changes in the Oracle
+	driver to stream blob data directly to the connection rather than
+	first spool to a temp file.  Since the call to return the file to
+	the user doesn't return until after the operation is complete,
+	spooling was a waste of time and resource.
+
+2001-03-01  Don Baccus  <dhogaza@pacifier.com>
+
+	* Added automatic quoting of emulated bind variables in order to
+	make it compatible with the analogous routine in the Oracle
+	driver.
+
+2000-12-30  Dan Wickstrom <dcwickstrom@earthlink.net>
+
+	* Added blob_select_file command.  Needed an inverse to
+	blob_dml_file to support porting of webmail.
+
+	* Added bind variable emulation to support acs 4.0 porting.
+
+2000-03-28 Lamar Owen <lamar.owen@wgcr.org>
+
+	* Merge with AOLserver 3.0rc1's nspostgres.c -- more error
+	checking from Jan Wieck.
+
+	* Also, changed behavior: if the datestyle parameter is not set in
+	config file, set it to be 'iso' by default -- it was not getting
+	correctly set.
+
+	* Wrapped ACS stuff inside FOR_ACS_USE #ifdef's.
+
+	* Added check for the existence of the PGDATESTYLE envvar and do
+	no setting of datestyle if it exists.
+
+	* Take two: make datestyle parameter override envvar, and make the
+	default go away.
+
+2000-02-12  John Beimler  <john@radiomind.com>
+
+	* Added a commented-out block showing settings for Debian/GNU
+	Linux with package installed AOLserver and PostgreSQL
+	
+2000-02-06  Lamar Owen <lamar.owen@wgcr.org>
+	
+	* Added reimplementation of ns_column and ns_table commands --
+	adapted the code in the ArsDigita Oracle driver to work in the
+	PostgreSQL driver's skeleton.  Will revisit this implementation
+	for cleanup once functionality fully verified.
+
+1999-12-13  Lamar Owen  <lamar.owen@wgcr.org>
+
+	* Makefile: Cleaned up assumptions about NSHOME, PGLIB, and PGINC
+	locations.
+
+	* Makefile: Added a commented-out block showing settings for
+	RedHat Linux with the PostgreSQL RPM's installed.
+	
+1999-12-01  Don Baccus  <dhogaza@pacifier.com>
+
+	* Don added the following improvements in December of 1999:
+
+	* 1. When a handle's returned to the pool and the handle's in
+	transaction mode, the driver rolls back the transaction.
+
+	* 2. Reopens crashed backends, retrying query if told to by
+	postmaster.
+
+	* 3. ns_db ntuples now returns the number of tuples affected by
+	"insert", "update", and "delete" queries (only worked for select
+	before).
+
+	* 4. Supports the following, assuming you've named your driver
+	"postgres" in your .ini file:
+
+          [ns/db/driver/postgres]
+          datestyle=iso
+	
+          (or any legal Postgres datestyle)
+	  
+	* 5. The driver's name's been changed from "Postgre95" to
+	"PostgreSQL", the current official name of the database software.
+
