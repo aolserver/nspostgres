@@ -1,5 +1,7 @@
 2001-09-28  Scott S. Goodwin  <scott@scottg.net>
 
+	* nspostgres.h: Split out from nspostgres.c.
+
 	* Makefile: Cleaned up the Makefile. Fixed a problem where libpq
 	wasn't being loaded, so we'd end up with a "function not defined
 	error." In the previous version of the postgres driver, the
