@@ -77,6 +77,13 @@ HDRS      = nspostgres.h
 # Libraries required by this module
 #
 MODLIBS   = -L$(PGLIB) -lpq
+
+ifndef AS3
+ifeq ($(AS3),1)
+    MODLIBS  +=  -lnsdb
+endif
+endif
+
 CFLAGS   += -DBIND_EMULATION -I$(PGINC)
 
 #
@@ -146,6 +153,8 @@ check-env:
 	    echo "**        make install POSTGRES=LSB INST=/path/to/aolserver"; \
 	    echo "** "; \
 	    echo "** OpenACS users should also set ACS=1"; \
+	    echo "** "; \
+	    echo "** AOLserver 3.x users should set AS3=1."; \    
 	    echo "** "; \
 	    exit 1; \
 	fi

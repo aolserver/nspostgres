@@ -1,3 +1,8 @@
+2003-09-27  Lamar Owen <lowen@pari.edu>
+
+	* Added -lnsdb for AOLserver 4
+	* Added AS3 define for Makefile for building with AOLserver 3
+
 2003-02-17  Lamar Owen <lamar.owen@wgcr.org>
 
 	* tagged and released 4.0beta1
