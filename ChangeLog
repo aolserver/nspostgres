@@ -1,3 +1,11 @@
+2002-09-29  Scott Goodwin  <scott@scottg.net>
+
+	* STARTING OVER: I'm tagging the nspostgres tree as "pre-don". Don
+	Baccus is going to be checking out the tree and either working
+	with what I've done here, or replacing it all with the current
+	version of the OpenACS postgres module. The name of the module
+	will stay nspostgres.
+
 2002-07-01  Scott S. Goodwin  <scott@scottg.net>
 
 	* all: reset file perms to 0644 for all files except the CVS
