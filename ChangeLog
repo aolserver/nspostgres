@@ -1,3 +1,9 @@
+2001-12-03  Scott S. Goodwin  <scott@scottg.net>
+
+	* nspostgres.c: Cleaned up the code comments to conform to
+	AOLserver coding style. Haven't populated most of the comments yet
+	:)
+	
 2001-09-28  Scott S. Goodwin  <scott@scottg.net>
 
 	* nspostgres.h: Split out from nspostgres.c.
