@@ -21,18 +21,23 @@
 #
 # NOTE:  This code is unsupported and for example purposes only.
 
+ifdef INST
+NSHOME ?= $(INST)
+else
+NSHOME ?= ../aolserver
+endif
+
+PGLIB = $(POSTGRES)/lib
+PGINC = $(POSTGRES)/include
+
+MODULE      = nspostgres.so
+OBJS        = nspostgres.o
+EXTRA_OBJS  = $(PGLIB)/libpq.so
+HDRS        =
+
+#=======================================
+
 INSTALL=/home/nsadmin
-
-# Location of the PostgreSQL libraries
-PGLIB=/usr/local/pgsql/lib
-
-# Location of the PostgreSQL includes
-PGINC=/usr/local/pgsql/include
-
-# Location of the AOLserver files (normally the ~nsadmin directory):
-#NSHOME=/opt/aolserver
-# Alternate location for AOLserver
-NSHOME=/home/aolserver/aolserver3_0
 
 CC=gcc
 COPTS=-Wall -fpic -shared -I/usr/local/pgsql/include -I/home/aolserver/include -I-/usr/include
@@ -78,9 +83,6 @@ COPTS=-fpic -shared -I$(PGINC) -I$(NSHOME)/include -I-/usr/include
 
 # You should not need to edit anything below this line.
 
-EXTRA_OBJS=$(PGLIB)/libpq.so
-OBJS=nspostgres.o
-MODULE=nspostgres.so
 CFLAGS=-DFOR_ACS_USE -DBIND_EMULATION -I$(NSHOME)/include $(COPTS)
 LDFLAGS=-shared -I$(PGINC) -I$(NSHOME)/include -I-/usr/include
 
@@ -95,3 +97,17 @@ install: $(MODULE)
 
 clean:
 	rm -f *.o *.so
+
+# Extra stuff to make sure that OPENSSL is set.
+
+nspostgres.c: check-env
+
+.PHONY: check-env
+check-env:
+	@if [ "$(POSTGRES)" = "" ]; then \
+	    echo "** "; \
+	    echo "** POSTGRES variable not set."; \
+	    echo "** nspostgres.so will not be built."; \
+	    echo "** "; \
+	    exit 1; \
+	fi
