@@ -7,16 +7,49 @@
 #
 
 ifdef INST
-NSHOME ?= $(INST)
+    NSHOME ?= $(INST)
 else
-NSHOME ?= ../aolserver
+    NSHOME ?= ../aolserver
 endif
 
+#
+# Manage to find PostgreSQL components in the system, or where you specify
+#
+ifeq ($(POSTGRES),LSB)
+    PGLIB = /usr/lib
+    PGINC = /usr
+else
+    PGLIB = $(POSTGRES)/lib
+    PGINC = $(POSTGRES)
+endif
+ 
+#
+# Module name
+# 
 MOD       = nspostgres.so
+
+#
+# Objects to build
+#
 OBJS      = nspostgres.o
-HDRS      =
-MODLIBS   = -L$(POSTGRES)/lib -lpq
-CFLAGS   += -DBIND_EMULATION -I$(POSTGRES)/include
+
+#
+# Header files for this module
+# 
+HDRS      = nspostgres.h
+
+#
+# Libraries required by this module
+#
+MODLIBS   = -L$(PGLIB)/lib -lpq
+CFLAGS   += -DBIND_EMULATION -I$(PGINC)/include
+
+#
+# ACS users should set ACS=1
+#
+ifdef ACS
+    CFLAGS   +=  -DFOR_ACS_USE
+endif
 
 include  $(NSHOME)/include/Makefile.module
 
@@ -28,35 +61,14 @@ check-env:
 	    echo "** "; \
 	    echo "** POSTGRES variable not set."; \
 	    echo "** nspostgres.so will not be built."; \
+	    echo "** "; \
 	    echo "** Usage: make POSTGRES=/path/to/postgresql"; \
+	    echo "**        make POSTGRES=LSB"; \
 	    echo "** Usage: make install POSTGRES=/path/to/postgresql INST=/path/to/aolserver"; \
+	    echo "**        make install POSTGRES=LSB INST=/path/to/aolserver"; \
+	    echo "** "; \
+	    echo "** OpenACS users should also set ACS=1"; \
 	    echo "** "; \
 	    exit 1; \
 	fi
-
-
-
-### OLD CRUFT:
-
-#LDFLAGS=-shared -I$(PGINC) -I$(NSHOME)/include -I-/usr/include
-#EXTRA_OBJS  = $(PGLIB)/libpq.so
-#CC=gcc
-#COPTS=-fPIC -shared -I$(PGINC) -I$(NSHOME)/include -I-/usr/include
-#CFLAGS=-DFOR_ACS_USE -DBIND_EMULATION -I$(NSHOME)/include $(COPTS)
-# old: CFLAGS  += -DBIND_EMULATION -I$(NSHOME)/include $(COPTS)
-
-#all: $(MOD)
-#
-#$(MOD): $(OBJS)
-	#gcc $(LDFLAGS) -o $(MOD) $(OBJS) $(EXTRA_OBJS)
-#
-#install: $(MOD)
-#	cp $(MOD) $(INSTALL)/bin/
-#	chmod +x $(INSTALL)/bin/$(MOD)
-#
-#clean:
-#	rm -f *.o *.so
-
-# Extra stuff to make sure that POSTGRES is set.
-# -DFOR_ACS_USE required for ACS/pg use!
 

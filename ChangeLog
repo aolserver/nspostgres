@@ -1,3 +1,13 @@
+2002-12-13  Scott S. Goodwin  <scott@scottg.net>
+
+	* OVERWRITE: I have taken the latest OpenACS version of their postgres
+	module and overwritten the "pre-don" version. Had to take postgres.c
+	and split it into nspostgres.c and .h. Updated nspostgres Makefile to
+	allow compiling with the ACS flag, and to allow setting POSTGRES var
+	to "LSB" which will cause the module to look for PostgreSQL libraries
+	in the standard Linux locations. Lamar Owen is now primary maintainer
+	of this code.
+
 2002-09-29  Scott Goodwin  <scott@scottg.net>
 
 	* STARTING OVER: I'm tagging the nspostgres tree as "pre-don". Don
