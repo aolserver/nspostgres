@@ -1,3 +1,13 @@
+2001-09-28  Scott S. Goodwin  <scott@scottg.net>
+
+	* Makefile: Cleaned up the Makefile. Fixed a problem where libpq
+	wasn't being loaded, so we'd end up with a "function not defined
+	error." In the previous version of the postgres driver, the
+	libpq.so is used in the EXTRA_OBJS variable. I wonder if this
+	means that the libpq.so file is loaded when the nspostgres.so
+	module is loaded. I'm not sure how that works. Now, libpq.a is
+	being used.
+
 2001-09-08  Scott S. Goodwin  <scott@scottg.net>
 
 	* Makefile: Turned off FOR_ACS_USE (I'll investigate what the
