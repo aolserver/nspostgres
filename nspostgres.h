@@ -36,9 +36,12 @@
    the constant NS_AOLSERVER_3_PLUS is defined in AOLserver 3 and greater's
    ns.h */
 
-#ifndef NS_AOLSERVER_3_PLUS
 
+#ifndef NS_DML
 #include "nsdb.h"
+#endif
+
+#ifndef NS_AOLSERVER_3_PLUS
 #include "nstcl.h"
 #endif /* NS_AOLSERVER_3_PLUS */
 
