@@ -785,7 +785,7 @@ Ns_PgGetTableInfo(Ns_DbHandle *handle, char *table)
     Ns_DStringInit(&ds);
     Ns_DStringVarAppend(&ds, "SELECT a.attname, t.typname "
                         "FROM pg_class c, pg_attribute a, pg_type t "
-                        "WHERE c.relname = '", table, "' "
+                        "WHERE c.relname = lower('", table, "') "
                         "and a.attnum > 0 and a.attrelid = c.oid "
                         "and a.atttypid = t.oid ORDER BY attname", NULL);
 
@@ -1174,7 +1174,7 @@ static int
 blob_put(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id, char* value)
 {
     int     i, j, segment, value_len, segment_len;
-    char    out_buf[8001], query[100];
+    char    out_buf[8001], query[10000];
     char    *segment_pos, *value_ptr;
     
     value_len = strlen(value);
@@ -1232,7 +1232,7 @@ static int
 blob_dml_file(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id, char* filename)
 {
     int    fd, i, j, segment, readlen;
-    char   in_buf[6000], out_buf[8001], query[100];
+    char   in_buf[6000], out_buf[8001], query[10000];
     char   *segment_pos;
     
     fd = open (filename, O_RDONLY);
@@ -1445,7 +1445,9 @@ BadArgs(Tcl_Interp *interp, char **argv, char *args)
 static int
 DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
 {
-    Ns_Free(sql);
+    NsPgConn *pgconn = handle->connection; 
+    char     *pqerror; 
+
     Tcl_AppendResult(interp, "Database operation \"", cmd, "\" failed", NULL);
 
     if (handle->cExceptionCode[0] != '\0') {
@@ -1459,6 +1461,16 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
 
 	Tcl_AppendResult(interp, ")", NULL);
     }
+
+    pqerror = PQerrorMessage(pgconn->conn); 
+    if (pqerror[0] != '\0') { 
+	Tcl_AppendResult(interp, "\n\n", pqerror, NULL); 
+    } else { 
+	Tcl_AppendResult(interp, "\n", NULL); 
+    } 
+    Tcl_AppendResult(interp, "\nSQL: ", sql, NULL); 
+    
+    Ns_Free(sql); 
     
     return TCL_ERROR;
 }
@@ -1804,7 +1816,8 @@ PgBindCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 		    Ns_DStringAppend(&ds, "'");       
 		    
 		    /*
-		     * DRB: Unfortunately, we need to double-quote quotes as well...
+		     * DRB: Unfortunately, we need to double-quote quotes as well...and
+		     * escape backslashes
 		     */ 
 
 		    for (p = value; *p; p++) {
@@ -1814,6 +1827,12 @@ PgBindCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 			    }
 			    value = p;
 			    Ns_DStringAppend(&ds, "'");
+			} else if (*p == '\\') { 
+			    if (p > value) { 
+				Ns_DStringNAppend(&ds, value, p-value); 
+			    } 
+			    value = p; 
+			    Ns_DStringAppend(&ds, "\\"); 
 			}
 		    }
 		    
@@ -1946,11 +1965,14 @@ PgCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv)
 			     argv[0], " command dbId blobId\"", NULL);
 	    return TCL_ERROR;
 	}
+#if 0
+	/* blob_get doesn't need to be in transaction */
 	if (!pgconn->in_transaction) {
 	    Tcl_AppendResult(interp,
 			     "blob_get only allowed in transaction", NULL);
 	    return TCL_ERROR;
 	}
+#endif
 	return blob_get(interp, handle, argv[3]);
     } else if (!strcmp(argv[1], "blob_put")) {
 	if (argc != 5) {
@@ -2424,7 +2446,8 @@ pg_table_command (ClientData dummy, Tcl_Interp *interp,
 	}
 	
 	while (*scan != '\000') {
-	    if (!strcmp(argv[3], scan)) {
+	    /* Case-insensitive comparison */
+	    if (!strcasecmp(argv[3], scan)) {
 		exists_p = 1;
 		break;
 	    }

@@ -1,3 +1,10 @@
+2002-06-02  Scott Goodwin  <scott@scottg.net>
+
+	* nspostgres.c: Incorporated latest patches from the postgres
+	module that the OpenACS team maintains.
+
+	* TODO: Removed this file.
+
 2001-12-13  Scott S. Goodwin  <scott@scottg.net>
 
 	* TODO: added this file.
