@@ -1,3 +1,7 @@
+2003-02-17  Lamar Owen <lamar.owen@wgcr.org>
+
+	* tagged and released 4.0beta1
+
 2003-01-09  Lamar Owen <lamar.owen@wgcr.org>
 	
 	* nspostgres.h: changed include order and conditionals for
