@@ -408,8 +408,9 @@ Ns_PgExec(Ns_DbHandle *handle, char *sql) {
         return NS_DML;
         break;
     default:
-		Ns_Log(Error, "%s: result status: %d message: %s", asfuncname,
+	Ns_Log(Error, "%s: result status: %d message: %s", asfuncname,
                PQresultStatus(nsConn->res), PQerrorMessage(nsConn->conn));
+	Ns_DbSetException(handle,"ERROR",PQerrorMessage(nsConn->conn));
         return NS_ERROR;
     }
 
