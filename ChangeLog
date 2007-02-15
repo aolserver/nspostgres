@@ -1,4 +1,8 @@
 2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
+	it didn't, so now I'm moving the message inside the quotation marks
+	in the message of the form (exception FOO, "...")
+
+2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
 	* observed that data added to tcl result doesn't all get through,
 	so I'm now seeing if removing the newline chars from the message 
 	appended to the tcl result lets more of the message through.

@@ -1175,8 +1175,16 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
                      NULL);
     if (handle->dsExceptionMsg.length > 0) {
       Tcl_AppendResult(interp, ", \"", handle->dsExceptionMsg.string,
-                       "\"", NULL);
+                       NULL);
     }
+    Tcl_AppendResult
+      (
+	interp, 
+	"(Status of PQexec call: ", 
+	PQresStatus(PQresultStatus(nspgConn->res)), 
+	")\"",
+	NULL
+      );
     Tcl_AppendResult(interp, ")", NULL);
   }
 
