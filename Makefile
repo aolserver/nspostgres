@@ -35,9 +35,16 @@
 #      PostgreSQL Database Driver for AOLserver
 #
 
-POSTGRES=/usr/local/pgsql
-ifneq ($(shell [ -f $(POSTGRES)/include/libpq-fe.h ] && echo ok),ok)
-  POSTGRES = LSB
+# ONLY if POSTGRES never received a value, do we try to find a postgres
+# installation by setting the value of POSTGRES. Having determined no previous
+# value for POSTGRES, we try two things: the first, postgres's default --prefix
+# setting; if that fails we try the second, our LSB setting.
+
+ifndef POSTGRES
+  POSTGRES=/usr/local/pgsql
+  ifneq ($(shell [ -f $(POSTGRES)/include/libpq-fe.h ] && echo ok),ok)
+    POSTGRES = LSB
+  endif
 endif
 
 ifdef INST
