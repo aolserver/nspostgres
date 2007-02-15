@@ -70,13 +70,17 @@ VER_ = $(subst .,_,$(VER))
 #
 # Manage to find PostgreSQL components in the system, or where you specify
 #
+ifndef PG_CONFIG
+    PG_CONFIG = pg_config
+endif
+
 ifeq ($(POSTGRES),LSB)
     PGLIB = /usr/lib
     PGINC = /usr/include/pgsql
 else
     ifeq ($(POSTGRES),PG_CONFIG)
-        PGLIB = $(shell pg_config --libs)
-        PGINC = $(shell pg_config --includedir)
+        PGLIB = $(shell $(PG_CONFIG) --libs)
+        PGINC = $(shell $(PG_CONFIG) --includedir)
     else
         ifneq ($(POSTGRES),SEPARATELY)
             PGLIB = $(POSTGRES)/lib

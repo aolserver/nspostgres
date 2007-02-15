@@ -1,4 +1,12 @@
 2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
+	* add the ability to specify the fully qualified location
+	of the pg_config executable by adding PG_CONFIG=/path/to/it;
+	now you can say "POSTGRES=PG_CONFIG PG_CONFIG=/some/where/pg_config"
+	and in so doing locate a particular installation of postgres, perhaps
+	among many on the same machine, or perhaps not locatable due to 
+	not being found along the execution path.
+
+2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
 	* correct a situation where the POSTGRES variable was prematurely
 	overwritten. It specifies either where to find a postgres install, 
 	or else how to find it. The author of the overwriting code wanted
