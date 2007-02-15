@@ -79,7 +79,7 @@ ifeq ($(POSTGRES),LSB)
     PGINC = /usr/include/pgsql
 else
     ifeq ($(POSTGRES),PG_CONFIG)
-        PGLIB = $(shell $(PG_CONFIG) --libs)
+        PGLIB = $(shell $(PG_CONFIG) --libdir)
         PGINC = $(shell $(PG_CONFIG) --includedir)
     else
         ifneq ($(POSTGRES),SEPARATELY)

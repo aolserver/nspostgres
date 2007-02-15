@@ -1,4 +1,19 @@
 2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
+	* in each function that has one, change the name of all local 
+	NsPgConn* variables to nspgConn, to make things a little easier
+	to read.
+	* when driver throws an error message from a call to PQexec,
+	add the result status returned from the pg server. For more
+	info, see: 
+	http://www.postgresql.org/docs/8.1/static/libpq-exec.html
+	and scroll down to the documentation for the PQresultStatus() func.
+
+2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
+	* The variable PGLIB was meant to hold the path to the libs; the
+	build failed when this variable got pg_config --libs. Worked again
+	when using pg_config --libdir.
+
+2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
 	* add the ability to specify the fully qualified location
 	of the pg_config executable by adding PG_CONFIG=/path/to/it;
 	now you can say "POSTGRES=PG_CONFIG PG_CONFIG=/some/where/pg_config"

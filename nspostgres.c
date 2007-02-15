@@ -458,7 +458,7 @@ Ns_PgSelect(Ns_DbHandle *handle, char *sql) {
 
     static char *asfuncname = "Ns_PgSelect";
     Ns_Set         *row = NULL;
-    NsPgConn       *nsConn;
+    NsPgConn       *nspgConn;
     int             i;
 
     if (handle == NULL || handle->connection == NULL) {
@@ -471,23 +471,34 @@ Ns_PgSelect(Ns_DbHandle *handle, char *sql) {
         goto done;
     }
 
-    nsConn = handle->connection;
+    nspgConn = handle->connection;
 
     if (Ns_PgExec(handle, sql) != NS_ERROR) {
 
-        if (PQresultStatus(nsConn->res) == PGRES_TUPLES_OK) {
-            nsConn->curTuple = 0;
-            nsConn->nCols = PQnfields(nsConn->res);
-            nsConn->nTuples = PQntuples(nsConn->res);
+        if (PQresultStatus(nspgConn->res) == PGRES_TUPLES_OK) {
+            nspgConn->curTuple = 0;
+            nspgConn->nCols = PQnfields(nspgConn->res);
+            nspgConn->nTuples = PQntuples(nspgConn->res);
             row = handle->row;
             
-            for (i = 0; i < nsConn->nCols; i++) {
-                Ns_SetPut(row, (char *)PQfname(nsConn->res, i), NULL);
+            for (i = 0; i < nspgConn->nCols; i++) {
+                Ns_SetPut(row, (char *)PQfname(nspgConn->res, i), NULL);
             }
             
         } else {
-            Ns_Log(Error, "Ns_PgSelect(%s):  Query did not return rows:  %s",
-                   handle->datasource, sql);
+	  Ns_Log
+	    (
+	      Error, 
+
+	      "Ns_PgSelect(%s):  Query did not return rows "
+	      "(result from postgres pq client lib was %s):  %s",
+
+	      handle->datasource,
+
+	      PQresStatus(PQresultStatus(nspgConn->res)),
+
+	      sql
+	    );
         }
     }
   done:
@@ -503,7 +514,7 @@ static int
 Ns_PgGetRow(Ns_DbHandle *handle, Ns_Set *row) {
 
     static char    *asfuncname = "Ns_PgGetRow";
-    NsPgConn       *nsConn;
+    NsPgConn       *nspgConn;
     int             i;
 
     if (handle == NULL || handle->connection == NULL) {
@@ -516,25 +527,25 @@ Ns_PgGetRow(Ns_DbHandle *handle, Ns_Set *row) {
         return NS_ERROR;
     }
 
-    nsConn = handle->connection;
+    nspgConn = handle->connection;
 
-    if (nsConn->nCols == 0) {
+    if (nspgConn->nCols == 0) {
         Ns_Log(Error, "Ns_PgGetRow(%s):  Get row called outside a fetch row loop.",
                handle->datasource);
         return NS_ERROR;
-    } else if (nsConn->curTuple == nsConn->nTuples) {
+    } else if (nspgConn->curTuple == nspgConn->nTuples) {
 
-        PQclear(nsConn->res);
-        nsConn->res = NULL;
-        nsConn->nCols = nsConn->nTuples = nsConn->curTuple = 0;
+        PQclear(nspgConn->res);
+        nspgConn->res = NULL;
+        nspgConn->nCols = nspgConn->nTuples = nspgConn->curTuple = 0;
         return NS_END_DATA;
 
     } else {
-        for (i = 0; i < nsConn->nCols; i++) {
-            Ns_SetPutValue(row, i, (char *) PQgetvalue(nsConn->res,
-				 nsConn->curTuple, i));
+        for (i = 0; i < nspgConn->nCols; i++) {
+            Ns_SetPutValue(row, i, (char *) PQgetvalue(nspgConn->res,
+				 nspgConn->curTuple, i));
         }
-        nsConn->curTuple++;
+        nspgConn->curTuple++;
     }
 
     return NS_OK;
@@ -548,19 +559,19 @@ static int
 Ns_PgFlush(Ns_DbHandle *handle) {
 
     static char *asfuncname = "Ns_PgFlush";
-    NsPgConn   *nsConn;
+    NsPgConn   *nspgConn;
 
     if (handle == NULL || handle->connection == NULL) {
         Ns_Log(Error, "%s: Invalid connection.", asfuncname);
         return NS_ERROR;
     } 
 
-    nsConn = handle->connection;
+    nspgConn = handle->connection;
 
-    if (nsConn->nCols > 0) {
-        PQclear(nsConn->res);
-        nsConn->res = NULL;
-        nsConn->nCols = nsConn->nTuples = nsConn->curTuple = 0;
+    if (nspgConn->nCols > 0) {
+        PQclear(nspgConn->res);
+        nspgConn->res = NULL;
+        nspgConn->nCols = nspgConn->nTuples = nspgConn->curTuple = 0;
     }
     return NS_OK;
 }
@@ -789,7 +800,7 @@ decode3(unsigned char *p, char *buf, int n)
 static int
 blob_get(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id)
 {
-    NsPgConn	*nsConn = (NsPgConn *) handle->connection;
+    NsPgConn	*nspgConn = (NsPgConn *) handle->connection;
 	int			segment;
 	char		query[100];
 	char		*segment_pos;
@@ -812,13 +823,23 @@ blob_get(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id)
 		sprintf(segment_pos, "%d", segment);
 		if (Ns_PgExec(handle, query) != NS_ROWS) {
 			Tcl_AppendResult(interp, "Error selecting data from BLOB", NULL);
+
+			Tcl_AppendResult
+			  (
+			    interp, 
+			    " (Status of PQexec call: ", 
+			    PQresStatus(PQresultStatus(nspgConn->res)), 
+			    ")",
+			    NULL
+			  );
+  
 			return TCL_ERROR;
 		}
 
-		if (PQntuples(nsConn->res) == 0) break;
+		if (PQntuples(nspgConn->res) == 0) break;
 
-		byte_len_column = PQgetvalue(nsConn->res, 0, 0);
-		data_column = PQgetvalue(nsConn->res, 0, 1);
+		byte_len_column = PQgetvalue(nspgConn->res, 0, 0);
+		data_column = PQgetvalue(nspgConn->res, 0, 1);
 		sscanf(byte_len_column, "%d", &byte_len);
 		nbytes += byte_len;
 		n = byte_len;
@@ -830,8 +851,8 @@ blob_get(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id)
 		segment++;
     }
 
-	PQclear(nsConn->res);
-	nsConn->res = NULL;
+	PQclear(nspgConn->res);
+	nspgConn->res = NULL;
 
 	return TCL_OK;
 }
@@ -877,6 +898,7 @@ static int
 blob_put(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 			char* value)
 {
+    NsPgConn	*nspgConn = (NsPgConn *) handle->connection;
 	int			i, j, segment, value_len, segment_len;
 	char		out_buf[8001], query[10000];
 	char		*segment_pos, *value_ptr;
@@ -900,6 +922,16 @@ blob_put(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 		sprintf(segment_pos, "%d, %d, '%s')", segment, segment_len, out_buf);
 		if (Ns_PgExec(handle, query) != NS_DML) {
 			Tcl_AppendResult(interp, "Error inserting data into BLOB", NULL);
+
+			Tcl_AppendResult
+			  (
+			    interp, 
+			    " (Status of PQexec call: ", 
+			    PQresStatus(PQresultStatus(nspgConn->res)), 
+			    ")",
+			    NULL
+			  );
+  
 			return TCL_ERROR;
 		}
         value_ptr += segment_len;
@@ -917,6 +949,7 @@ static int
 blob_dml_file(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 			char* filename)
 {
+    NsPgConn	*nspgConn = (NsPgConn *) handle->connection;
 	int			fd, i, j, segment, readlen;
 	char		in_buf[6000], out_buf[8001], query[10000];
 	char		*segment_pos;
@@ -947,6 +980,16 @@ blob_dml_file(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 		sprintf(segment_pos, "%d, %d, '%s')", segment, readlen, out_buf);
 		if (Ns_PgExec(handle, query) != NS_DML) {
 			Tcl_AppendResult(interp, "Error inserting data into BLOB", NULL);
+
+			Tcl_AppendResult
+			  (
+			    interp, 
+			    " (Status of pg exec call: ", 
+			    PQresStatus(PQresultStatus(nspgConn->res)), 
+			    ")",
+			    NULL
+			  );
+  
 			return TCL_ERROR;
 		}
 		readlen = read(fd, in_buf, 6000);
@@ -974,7 +1017,7 @@ static int
 blob_send_to_stream(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id, 
 		    int to_conn_p, char* filename)
 {
-  NsPgConn	*nsConn = (NsPgConn *) handle->connection;
+  NsPgConn	*nspgConn = (NsPgConn *) handle->connection;
   int		segment;
   char		query[100];
   int		fd;
@@ -1032,13 +1075,23 @@ blob_send_to_stream(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id,
     sprintf(segment_pos, "%d", segment);
     if (Ns_PgExec(handle, query) != NS_ROWS) {
       Tcl_AppendResult(interp, "Error selecting data from BLOB", NULL);
+
+      Tcl_AppendResult
+        (
+	  interp, 
+	  " (Status of pg exec call: ", 
+	  PQresStatus(PQresultStatus(nspgConn->res)), 
+	  ")",
+	  NULL
+	);
+  
       return TCL_ERROR;
     }
 
-    if (PQntuples(nsConn->res) == 0) break;
+    if (PQntuples(nspgConn->res) == 0) break;
 
-    byte_len_column = PQgetvalue(nsConn->res, 0, 0);
-    data_column = PQgetvalue(nsConn->res, 0, 1);
+    byte_len_column = PQgetvalue(nspgConn->res, 0, 0);
+    data_column = PQgetvalue(nspgConn->res, 0, 1);
     sscanf(byte_len_column, "%d", &byte_len);
     n = byte_len;
     for (i=0, j=0; n > 0; i += 4, j += 3, n -= 3) {
@@ -1055,8 +1108,8 @@ blob_send_to_stream(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id,
       close (fd);
     }
 
-  PQclear(nsConn->res);
-  nsConn->res = NULL;
+  PQclear(nspgConn->res);
+  nspgConn->res = NULL;
 
   return TCL_OK;
 }
@@ -1113,7 +1166,7 @@ BadArgs(Tcl_Interp *interp, char **argv, char *args)
 static int
 DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
 {
-  NsPgConn *pgconn = handle->connection;
+  NsPgConn *nspgConn = handle->connection;
   char     *pqerror;
 
   Tcl_AppendResult(interp, "Database operation \"", cmd, "\" failed", NULL);
@@ -1127,12 +1180,22 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
     Tcl_AppendResult(interp, ")", NULL);
   }
 
-  pqerror = PQerrorMessage(pgconn->conn);
+  pqerror = PQerrorMessage(nspgConn->conn);
   if (pqerror[0] != '\0') {
     Tcl_AppendResult(interp, "\n\n", pqerror, NULL);
   } else {
     Tcl_AppendResult(interp, "\n", NULL);
   }
+
+  Tcl_AppendResult
+    (
+      interp, 
+      "(Status of PQexec call: ", 
+      PQresStatus(PQresultStatus(nspgConn->res)), 
+      ")\n",
+      NULL
+    );
+  
   Tcl_AppendResult(interp, "\nSQL: ", sql, NULL);
 
   Ns_Free(sql);
@@ -1521,13 +1584,13 @@ static int
 PgCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv) {
 
     Ns_DbHandle    *handle;
-    NsPgConn        *pgconn;
+    NsPgConn        *nspgConn;
 
     if (Ns_TclDbGetHandle(interp, argv[2], &handle) != TCL_OK) {
         return TCL_ERROR;
     }
 
- 	pgconn = (NsPgConn *) handle->connection;
+ 	nspgConn = (NsPgConn *) handle->connection;
 
     /*
      * Make sure this is a PostgreSQL handle before accessing
@@ -1562,7 +1625,7 @@ PgCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv) {
                          	argv[0], " command dbId blobId value\"", NULL);
         	return TCL_ERROR;
     	}
-		if (!pgconn->in_transaction) {
+		if (!nspgConn->in_transaction) {
         	Tcl_AppendResult(interp,
 							 "blob_put only allowed in transaction", NULL);
         	return TCL_ERROR;
@@ -1574,7 +1637,7 @@ PgCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv) {
                          	argv[0], " command dbId blobId filename\"", NULL);
         	return TCL_ERROR;
     	}
-		if (!pgconn->in_transaction) {
+		if (!nspgConn->in_transaction) {
         	Tcl_AppendResult(interp,
 							 "blob_dml_file only allowed in transaction", NULL);
         	return TCL_ERROR;
@@ -1598,27 +1661,27 @@ PgCmd(ClientData dummy, Tcl_Interp *interp, int argc, char **argv) {
     }
 
     if (!strcmp(argv[1], "db")) {
-        Tcl_SetResult(interp, (char *) PQdb(pgconn->conn), TCL_STATIC);
+        Tcl_SetResult(interp, (char *) PQdb(nspgConn->conn), TCL_STATIC);
     } else if (!strcmp(argv[1], "host")) {
-        Tcl_SetResult(interp, (char *) PQhost(pgconn->conn), TCL_STATIC);
+        Tcl_SetResult(interp, (char *) PQhost(nspgConn->conn), TCL_STATIC);
     } else if (!strcmp(argv[1], "options")) {
-        Tcl_SetResult(interp, (char *) PQoptions(pgconn->conn), TCL_STATIC);
+        Tcl_SetResult(interp, (char *) PQoptions(nspgConn->conn), TCL_STATIC);
     } else if (!strcmp(argv[1], "port")) {
-        Tcl_SetResult(interp, (char *) PQport(pgconn->conn), TCL_STATIC);
+        Tcl_SetResult(interp, (char *) PQport(nspgConn->conn), TCL_STATIC);
     } else if (!strcmp(argv[1], "number")) {
-        sprintf(interp->result, "%u", pgconn->cNum);
+        sprintf(interp->result, "%u", nspgConn->cNum);
     } else if (!strcmp(argv[1], "error")) {
-        Tcl_SetResult(interp, (char *) PQerrorMessage(pgconn->conn),
+        Tcl_SetResult(interp, (char *) PQerrorMessage(nspgConn->conn),
 			 TCL_STATIC);
     } else if (!strcmp(argv[1], "status")) {
-        if (PQstatus(pgconn->conn) == CONNECTION_OK) {
+        if (PQstatus(nspgConn->conn) == CONNECTION_OK) {
             interp->result = "ok";
         } else {
             interp->result = "bad";
         }
     } else if (!strcmp(argv[1], "ntuples")) {
 	char string[16];
-	sprintf(string, "%d", pgconn->nTuples);
+	sprintf(string, "%d", nspgConn->nTuples);
 	Tcl_SetResult(interp, string, TCL_VOLATILE);
     } else {
         Tcl_AppendResult(interp, "unknown command \"", argv[2],
