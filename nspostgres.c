@@ -1169,42 +1169,44 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
   NsPgConn *nspgConn = handle->connection;
   char     *pqerror;
 
-  Tcl_AppendResult(interp, "Database operation \"", cmd, "\" failed", NULL);
+  Tcl_AppendResult(interp, "Database operation \"", cmd, "\" failed\n", NULL);
   if (handle->cExceptionCode[0] != '\0') {
-    Tcl_AppendResult(interp, " (exception ", handle->cExceptionCode,
+    Tcl_AppendResult(interp, "(exception ", handle->cExceptionCode,
                      NULL);
     if (handle->dsExceptionMsg.length > 0) {
       Tcl_AppendResult(interp, ", \"", handle->dsExceptionMsg.string,
-                       NULL);
+                       "\"", NULL);
     }
-    Tcl_AppendResult
-      (
-	interp, 
-	"(Status of PQexec call: ", 
-	PQresStatus(PQresultStatus(nspgConn->res)), 
-	")\"",
-	NULL
-      );
-    Tcl_AppendResult(interp, ")", NULL);
+    Tcl_AppendResult(interp, ")\n", NULL);
   }
 
   pqerror = PQerrorMessage(nspgConn->conn);
-  if (pqerror[0] != '\0') {
-    Tcl_AppendResult(interp, " pqerror was: ", pqerror, NULL);
-  } else {
-    Tcl_AppendResult(interp, "  ", NULL);
+  if (pqerror != NULL && pqerror[0] != '\0') {
+    Tcl_AppendResult(interp, "pqerror was: \"", pqerror, "\"\n", NULL);
   }
 
-  Tcl_AppendResult
-    (
-      interp, 
-      "(Status of PQexec call: ", 
-      PQresStatus(PQresultStatus(nspgConn->res)), 
-      ")",
-      NULL
-    );
-  
-  Tcl_AppendResult(interp, "  SQL: ", sql, NULL);
+  if(nspgConn->res)
+    {
+      Tcl_AppendResult
+        (
+	  interp, 
+	  "(Status of PQexec call: ", 
+	  PQresStatus(PQresultStatus(nspgConn->res)), 
+	  ")\n",
+	  NULL
+        );
+    }
+  else
+    {
+      Tcl_AppendResult
+        (
+	  interp, 
+	  "(Status of PQexec call: none; PQexec returned null pointer)\n",
+	  NULL
+        );
+    }
+
+  Tcl_AppendResult(interp, "SQL: ", sql, "\n", NULL);
 
   Ns_Free(sql);
 
@@ -1861,6 +1863,8 @@ pg_column_command (ClientData dummy, Tcl_Interp *interp,
 
     if (argc < 4) 
       {
+	/* NOTE, the tcl gurus suggested Tcl_WrongNumArgs() for this */
+
 	Tcl_AppendResult (interp, "wrong # args:  should be \"",
 			  argv[0], " command dbId table ?args?\"", NULL);
 	goto bailout;
