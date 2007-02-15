@@ -67,8 +67,16 @@ ifeq ($(POSTGRES),LSB)
     PGLIB = /usr/lib
     PGINC = /usr/include/pgsql
 else
-    PGLIB = $(POSTGRES)/lib
-    PGINC = $(POSTGRES)/include
+    ifeq ($(POSTGRES),PG_CONFIG)
+        PGLIB = $(shell pg_config --libs)
+        PGINC = $(shell pg_config --includedir)
+    else
+        ifneq ($(POSTGRES),SEPARATELY)
+            PGLIB = $(POSTGRES)/lib
+            PGINC = $(POSTGRES)/include
+        endif
+        # otherwise, it is assumed PGINC and PGLIB set on commandline
+    endif
 endif
  
 #
@@ -167,9 +175,16 @@ check-env:
 	    echo "** "; \
 	    echo "** Usage: make POSTGRES=/path/to/postgresql"; \
 	    echo "**        make POSTGRES=LSB"; \
+	    echo "**        make POSTGRES=PG_CONFIG"; \
+	    echo "**        make POSTGRES=SEPARATELY PGLIB=/path/to/libs PGINC=/wheres/the/includes" \
 	    echo "** "; \
 	    echo "** Usage: make install POSTGRES=/path/to/postgresql INST=/path/to/aolserver"; \
 	    echo "**        make install POSTGRES=LSB INST=/path/to/aolserver"; \
+	    echo "**        make install POSTGRES=PG_CONFIG"; \
+	    echo "**        make install POSTGRES=SEPARATELY \\"; \
+	    echo "                       PGLIB=/path/to/libs \\"; \
+	    echo "                       PGINC=/wheres/the/includes \\"; \
+	    echo "                   INST=/path/to/aolserver"; \
 	    echo "** "; \
 	    echo "** OpenACS users should also set ACS=1"; \
 	    echo "** "; \

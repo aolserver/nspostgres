@@ -38,6 +38,7 @@ PostgreSQL connection in a Tcl script.
 
 Contributors to this file include:
 
+        Jim Lynch		<jim@jam.sessionsnet.org>
 	Don Baccus		<dhogaza@pacifier.com>
 	Lamar Owen		<lamar.owen@wgcr.org>
 	Jan Wieck		<wieck@debis.com>

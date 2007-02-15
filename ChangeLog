@@ -1,3 +1,9 @@
+2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
+	* Hi everybody!
+	* This is my first attempt to extend the build system: here, 
+	I added "POSTGRES=SEPARATELY PGLIB=... PGINC=..." and
+	"POSTGRES=PG_CONFIG".
+
 2003-03-29  Scott Goodwin  <scott@scottg.net>
 
 	* Makefile: Fixed problem where if AS3 was not set, -lnsdb was not
