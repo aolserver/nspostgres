@@ -1,4 +1,9 @@
 2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
+	* observed that data added to tcl result doesn't all get through,
+	so I'm now seeing if removing the newline chars from the message 
+	appended to the tcl result lets more of the message through.
+
+2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
 	* in each function that has one, change the name of all local 
 	NsPgConn* variables to nspgConn, to make things a little easier
 	to read.

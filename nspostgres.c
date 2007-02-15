@@ -1182,9 +1182,9 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
 
   pqerror = PQerrorMessage(nspgConn->conn);
   if (pqerror[0] != '\0') {
-    Tcl_AppendResult(interp, "\n\n", pqerror, NULL);
+    Tcl_AppendResult(interp, " pqerror was: ", pqerror, NULL);
   } else {
-    Tcl_AppendResult(interp, "\n", NULL);
+    Tcl_AppendResult(interp, "  ", NULL);
   }
 
   Tcl_AppendResult
@@ -1192,11 +1192,11 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
       interp, 
       "(Status of PQexec call: ", 
       PQresStatus(PQresultStatus(nspgConn->res)), 
-      ")\n",
+      ")",
       NULL
     );
   
-  Tcl_AppendResult(interp, "\nSQL: ", sql, NULL);
+  Tcl_AppendResult(interp, "  SQL: ", sql, NULL);
 
   Ns_Free(sql);
 
