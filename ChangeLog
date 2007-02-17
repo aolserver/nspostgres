@@ -1,8 +1,18 @@
+2007-02-17  Jim Lynch <jim@jam.sessionsnet.org>
+	* factor:
+	we want to add the PQexec result status code to a string, so 
+	we will use a Tcl_DString which is a dynamic string. So, create
+	a function called stringify_PQresultStatus which returns pointer
+	to a newly allocated DString containing the result. This also checks
+	whether the incoming result pointer is null.
+	* replace where the driver output the result status, with calls
+	to stringify_PQresultStatus.
+	
 2007-02-15  Jim Lynch <jim@jam.sessionsnet.org>
-	Make the output of DbFail() more prettyer.
+	* Make the output of DbFail() more prettyer.
 
 2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>
-	it didn't, so now I'm moving the message inside the quotation marks
+	* it didn't, so now I'm moving the message inside the quotation marks
 	in the message of the form (exception FOO, "...")
 
 2007-02-14  Jim Lynch <jim@jam.sessionsnet.org>

@@ -30,10 +30,52 @@
  */
 
 #include "nspostgres.h"
+#include <tcl.h>
 
 DllExport int   Ns_ModuleVersion = 1;
 
 static char datestyle[STRING_BUF_LEN];
+
+
+/* 
+ * stringify_PQresultStatus
+ *
+ * allocates and returns a pointer to a newly allocated Tcl_DString
+ * which contains a result string stating the status of the incoming
+ * PQresult.
+ *
+ * returns that pointer (caller's responsibility to Tcl_DStringFree AND free), 
+ * !!or!! null pointer.
+ *
+ */
+
+Tcl_DString *
+stringify_PQresultStatus(PGresult *pgResult)
+{
+  Tcl_DString *result = 0;
+
+  result = malloc(sizeof(Tcl_DString));
+
+  if(result)
+    {
+      Tcl_DStringInit(result);
+
+      Tcl_DStringAppend(result, "(Status of PQexec call: ", -1);
+
+      if(pgResult)
+	{
+	  Tcl_DStringAppend(result, PQresStatus(PQresultStatus(pgResult)), -1);
+	}
+      else
+	{
+	  Tcl_DStringAppend(result, "none; PQexec returned null pointer", -1);
+	}
+
+      Tcl_DStringAppend(result, ")\n", -1);
+    }
+
+  return result;
+}
 
 DllExport int
 Ns_DbDriverInit(char *hDriver, char *configPath)
@@ -486,20 +528,68 @@ Ns_PgSelect(Ns_DbHandle *handle, char *sql) {
             }
             
         } else {
+	  Tcl_DString *pqString = stringify_PQresultStatus(nspgConn->res);
+	  char *theString = 0;
+
+	  if(pqString)
+	    {
+	      Tcl_DStringAppend(pqString, "\n", -1);
+	      theString = Tcl_DStringValue(pqString);
+	    }
+
 	  Ns_Log
 	    (
 	      Error, 
 
-	      "Ns_PgSelect(%s):  Query did not return rows "
-	      "(result from postgres pq client lib was %s):  %s",
+	      "\nNs_PgSelect(%s):  Query did not return rows\n"
+	      "%s"
+	      "SQL:  %s",
 
 	      handle->datasource,
 
-	      PQresStatus(PQresultStatus(nspgConn->res)),
+	      theString,
 
 	      sql
 	    );
+
+	  if(pqString)
+	    {
+	      Tcl_DStringFree(pqString);
+	      free(pqString);
+	    }
         }
+    } else {
+      // Ns_PgExec returned NS_ERROR
+
+      Tcl_DString *pqString = stringify_PQresultStatus(nspgConn->res);
+      char *theString = 0;
+      
+      if(pqString)
+	{
+	  Tcl_DStringAppend(pqString, "\n", -1);
+	  theString = Tcl_DStringValue(pqString);
+	}
+      
+      Ns_Log
+        (
+	  Error, 
+	  
+	  "\nNs_PgSelect(%s):  Ns_PgExec returned NS_ERROR\n"
+	  "%s"
+	  "SQL:  %s",
+	  
+	  handle->datasource,
+	  
+	  theString,
+	  
+	  sql
+	);
+
+      if(pqString)
+	{
+	  Tcl_DStringFree(pqString);
+	  free(pqString);
+	}
     }
   done:
     return (row);
@@ -824,15 +914,23 @@ blob_get(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id)
 		if (Ns_PgExec(handle, query) != NS_ROWS) {
 			Tcl_AppendResult(interp, "Error selecting data from BLOB", NULL);
 
-			Tcl_AppendResult
-			  (
-			    interp, 
-			    " (Status of PQexec call: ", 
-			    PQresStatus(PQresultStatus(nspgConn->res)), 
-			    ")",
-			    NULL
-			  );
-  
+			/*
+			 * append the result status
+			 */
+			Tcl_DString *pqString = 
+			  stringify_PQresultStatus(nspgConn->res); 
+
+			if(pqString)
+			  {
+			    Tcl_AppendResult
+			      (
+				interp, 
+				Tcl_DStringValue(pqString)
+			      );
+			    Tcl_DStringFree(pqString);
+			    free(pqString);
+			  }
+
 			return TCL_ERROR;
 		}
 
@@ -923,15 +1021,20 @@ blob_put(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 		if (Ns_PgExec(handle, query) != NS_DML) {
 			Tcl_AppendResult(interp, "Error inserting data into BLOB", NULL);
 
-			Tcl_AppendResult
-			  (
-			    interp, 
-			    " (Status of PQexec call: ", 
-			    PQresStatus(PQresultStatus(nspgConn->res)), 
-			    ")",
-			    NULL
-			  );
-  
+			/*
+			 * append the result status
+			 */
+			Tcl_DString *pqString = 
+			  stringify_PQresultStatus(nspgConn->res); 
+
+			if(pqString)
+			  {
+			    Tcl_AppendResult
+			      (interp, Tcl_DStringValue(pqString), NULL);
+			    Tcl_DStringFree(pqString);
+			    free(pqString);
+			  }
+			
 			return TCL_ERROR;
 		}
         value_ptr += segment_len;
@@ -981,15 +1084,21 @@ blob_dml_file(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 		if (Ns_PgExec(handle, query) != NS_DML) {
 			Tcl_AppendResult(interp, "Error inserting data into BLOB", NULL);
 
-			Tcl_AppendResult
-			  (
-			    interp, 
-			    " (Status of pg exec call: ", 
-			    PQresStatus(PQresultStatus(nspgConn->res)), 
-			    ")",
-			    NULL
-			  );
-  
+			Tcl_DString *pqString = 
+			  stringify_PQresultStatus(nspgConn->res); 
+
+			if(pqString)
+			  {
+			    Tcl_AppendResult
+			      (
+				interp, 
+				Tcl_DStringValue(pqString)
+			      );
+
+			    Tcl_DStringFree(pqString);
+			    free(pqString);
+			  }
+
 			return TCL_ERROR;
 		}
 		readlen = read(fd, in_buf, 6000);
@@ -1076,15 +1185,22 @@ blob_send_to_stream(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id,
     if (Ns_PgExec(handle, query) != NS_ROWS) {
       Tcl_AppendResult(interp, "Error selecting data from BLOB", NULL);
 
-      Tcl_AppendResult
-        (
-	  interp, 
-	  " (Status of pg exec call: ", 
-	  PQresStatus(PQresultStatus(nspgConn->res)), 
-	  ")",
-	  NULL
-	);
-  
+      Tcl_DString *pqString = 
+	stringify_PQresultStatus(nspgConn->res); 
+      
+      if(pqString)
+	{
+	  Tcl_AppendResult
+	    (
+	      interp, 
+	      Tcl_DStringValue(pqString),
+	      NULL
+	    );
+	  
+	  Tcl_DStringFree(pqString);
+	  free(pqString);
+	}
+
       return TCL_ERROR;
     }
 
@@ -1185,25 +1301,15 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
     Tcl_AppendResult(interp, "pqerror was: \"", pqerror, "\"\n", NULL);
   }
 
-  if(nspgConn->res)
+  /*
+   * append the result status
+   */
+  Tcl_DString *pqString = stringify_PQresultStatus(nspgConn->res); 
+  if(pqString)
     {
-      Tcl_AppendResult
-        (
-	  interp, 
-	  "(Status of PQexec call: ", 
-	  PQresStatus(PQresultStatus(nspgConn->res)), 
-	  ")\n",
-	  NULL
-        );
-    }
-  else
-    {
-      Tcl_AppendResult
-        (
-	  interp, 
-	  "(Status of PQexec call: none; PQexec returned null pointer)\n",
-	  NULL
-        );
+      Tcl_AppendResult(interp, Tcl_DStringValue(pqString));
+      Tcl_DStringFree(pqString);
+      free(pqString);
     }
 
   Tcl_AppendResult(interp, "SQL: ", sql, "\n", NULL);
