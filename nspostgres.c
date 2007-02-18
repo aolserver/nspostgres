@@ -925,7 +925,8 @@ blob_get(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id)
 			    Tcl_AppendResult
 			      (
 				interp, 
-				Tcl_DStringValue(pqString)
+				Tcl_DStringValue(pqString),
+				NULL
 			      );
 			    Tcl_DStringFree(pqString);
 			    free(pqString);
@@ -1092,7 +1093,8 @@ blob_dml_file(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 			    Tcl_AppendResult
 			      (
 				interp, 
-				Tcl_DStringValue(pqString)
+				Tcl_DStringValue(pqString),
+				NULL
 			      );
 
 			    Tcl_DStringFree(pqString);
@@ -1307,7 +1309,7 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
   Tcl_DString *pqString = stringify_PQresultStatus(nspgConn->res); 
   if(pqString)
     {
-      Tcl_AppendResult(interp, Tcl_DStringValue(pqString));
+      Tcl_AppendResult(interp, Tcl_DStringValue(pqString), NULL);
       Tcl_DStringFree(pqString);
       free(pqString);
     }
