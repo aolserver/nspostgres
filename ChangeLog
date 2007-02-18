@@ -1,4 +1,13 @@
 2007-02-17  Jim Lynch <jim@jam.sessionsnet.org>
+	* changed functionality and name of new function from two commits ago;
+	it now appends to an existing string rather than allocates and returns
+	a new string. name changed from stringify_PQresultStatus to
+	append_PQresultStatus. added allocation responsibility to caller, who
+	now must allocate the string, pass it in, use the result then free the
+	string. function docs (in nspostgres.c just above function) altered 
+	appropriately.
+
+2007-02-17  Jim Lynch <jim@jam.sessionsnet.org>
 	* fixed some places where Tcl_AppendResult didn't have NULL as their
 	last parameter
 

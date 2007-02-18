@@ -38,43 +38,33 @@ static char datestyle[STRING_BUF_LEN];
 
 
 /* 
- * stringify_PQresultStatus
+ * append_PQresultStatus
  *
- * allocates and returns a pointer to a newly allocated Tcl_DString
- * which contains a result string stating the status of the incoming
- * PQresult.
+ * accepts a pointer to a fully prepared and usable Tcl_DString
+ * and appends to it a descriptive string stating the status of the 
+ * incoming PQresult.
  *
- * returns that pointer (caller's responsibility to Tcl_DStringFree AND free), 
- * !!or!! null pointer.
+ * returns nothing; the collector string is an in-out parameter.
+ * As such, it could already contain a string at the point of this
+ * function call.
  *
  */
 
-Tcl_DString *
-stringify_PQresultStatus(PGresult *pgResult)
+void
+append_PQresultStatus(Tcl_DString *collector, const PGresult *pgResult)
 {
-  Tcl_DString *result = 0;
-
-  result = malloc(sizeof(Tcl_DString));
-
-  if(result)
+  Tcl_DStringAppend(collector, "(Status of PQexec call: ", -1);
+  
+  if(pgResult)
     {
-      Tcl_DStringInit(result);
-
-      Tcl_DStringAppend(result, "(Status of PQexec call: ", -1);
-
-      if(pgResult)
-	{
-	  Tcl_DStringAppend(result, PQresStatus(PQresultStatus(pgResult)), -1);
-	}
-      else
-	{
-	  Tcl_DStringAppend(result, "none; PQexec returned null pointer", -1);
-	}
-
-      Tcl_DStringAppend(result, ")\n", -1);
+      Tcl_DStringAppend(collector, PQresStatus(PQresultStatus(pgResult)), -1);
     }
-
-  return result;
+  else
+    {
+      Tcl_DStringAppend(collector, "none; PQexec returned null pointer", -1);
+    }
+  
+  Tcl_DStringAppend(collector, ")\n", -1);
 }
 
 DllExport int
@@ -528,14 +518,10 @@ Ns_PgSelect(Ns_DbHandle *handle, char *sql) {
             }
             
         } else {
-	  Tcl_DString *pqString = stringify_PQresultStatus(nspgConn->res);
-	  char *theString = 0;
-
-	  if(pqString)
-	    {
-	      Tcl_DStringAppend(pqString, "\n", -1);
-	      theString = Tcl_DStringValue(pqString);
-	    }
+	  Tcl_DString pqString;
+	  Tcl_DStringInit(&pqString);
+	  
+	  append_PQresultStatus(&pqString, nspgConn->res);
 
 	  Ns_Log
 	    (
@@ -547,28 +533,20 @@ Ns_PgSelect(Ns_DbHandle *handle, char *sql) {
 
 	      handle->datasource,
 
-	      theString,
+	      Tcl_DStringValue(&pqString),
 
 	      sql
 	    );
 
-	  if(pqString)
-	    {
-	      Tcl_DStringFree(pqString);
-	      free(pqString);
-	    }
+	  Tcl_DStringFree(&pqString);
         }
     } else {
       // Ns_PgExec returned NS_ERROR
 
-      Tcl_DString *pqString = stringify_PQresultStatus(nspgConn->res);
-      char *theString = 0;
-      
-      if(pqString)
-	{
-	  Tcl_DStringAppend(pqString, "\n", -1);
-	  theString = Tcl_DStringValue(pqString);
-	}
+      Tcl_DString pqString;
+      Tcl_DStringInit(&pqString);
+
+      append_PQresultStatus(&pqString, nspgConn->res);
       
       Ns_Log
         (
@@ -580,16 +558,12 @@ Ns_PgSelect(Ns_DbHandle *handle, char *sql) {
 	  
 	  handle->datasource,
 	  
-	  theString,
+	  Tcl_DStringValue(&pqString),
 	  
 	  sql
 	);
 
-      if(pqString)
-	{
-	  Tcl_DStringFree(pqString);
-	  free(pqString);
-	}
+      Tcl_DStringFree(&pqString);
     }
   done:
     return (row);
@@ -917,20 +891,15 @@ blob_get(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id)
 			/*
 			 * append the result status
 			 */
-			Tcl_DString *pqString = 
-			  stringify_PQresultStatus(nspgConn->res); 
-
-			if(pqString)
-			  {
-			    Tcl_AppendResult
-			      (
-				interp, 
-				Tcl_DStringValue(pqString),
-				NULL
-			      );
-			    Tcl_DStringFree(pqString);
-			    free(pqString);
-			  }
+			Tcl_DString pqString;
+			Tcl_DStringInit(&pqString);
+			
+			append_PQresultStatus(&pqString, nspgConn->res); 
+			
+			Tcl_AppendResult
+			  (interp, Tcl_DStringValue(&pqString), NULL);
+			
+			Tcl_DStringFree(&pqString);
 
 			return TCL_ERROR;
 		}
@@ -1025,16 +994,15 @@ blob_put(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 			/*
 			 * append the result status
 			 */
-			Tcl_DString *pqString = 
-			  stringify_PQresultStatus(nspgConn->res); 
-
-			if(pqString)
-			  {
-			    Tcl_AppendResult
-			      (interp, Tcl_DStringValue(pqString), NULL);
-			    Tcl_DStringFree(pqString);
-			    free(pqString);
-			  }
+			Tcl_DString pqString;
+			Tcl_DStringInit(&pqString);
+			
+			append_PQresultStatus(&pqString, nspgConn->res); 
+			
+			Tcl_AppendResult
+			  (interp, Tcl_DStringValue(&pqString), NULL);
+			
+			Tcl_DStringFree(&pqString);
 			
 			return TCL_ERROR;
 		}
@@ -1085,21 +1053,15 @@ blob_dml_file(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 		if (Ns_PgExec(handle, query) != NS_DML) {
 			Tcl_AppendResult(interp, "Error inserting data into BLOB", NULL);
 
-			Tcl_DString *pqString = 
-			  stringify_PQresultStatus(nspgConn->res); 
-
-			if(pqString)
-			  {
-			    Tcl_AppendResult
-			      (
-				interp, 
-				Tcl_DStringValue(pqString),
-				NULL
-			      );
-
-			    Tcl_DStringFree(pqString);
-			    free(pqString);
-			  }
+			Tcl_DString pqString;
+			Tcl_DStringInit(&pqString);
+			
+			append_PQresultStatus(&pqString, nspgConn->res); 
+			
+			Tcl_AppendResult
+			  (interp, Tcl_DStringValue(&pqString), NULL);
+	  
+			Tcl_DStringFree(&pqString);
 
 			return TCL_ERROR;
 		}
@@ -1187,21 +1149,14 @@ blob_send_to_stream(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id,
     if (Ns_PgExec(handle, query) != NS_ROWS) {
       Tcl_AppendResult(interp, "Error selecting data from BLOB", NULL);
 
-      Tcl_DString *pqString = 
-	stringify_PQresultStatus(nspgConn->res); 
+      Tcl_DString pqString;
+      Tcl_DStringInit(&pqString);
+
+      append_PQresultStatus(&pqString, nspgConn->res); 
       
-      if(pqString)
-	{
-	  Tcl_AppendResult
-	    (
-	      interp, 
-	      Tcl_DStringValue(pqString),
-	      NULL
-	    );
+      Tcl_AppendResult(interp, Tcl_DStringValue(&pqString), NULL);
 	  
-	  Tcl_DStringFree(pqString);
-	  free(pqString);
-	}
+      Tcl_DStringFree(&pqString);
 
       return TCL_ERROR;
     }
@@ -1306,13 +1261,14 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
   /*
    * append the result status
    */
-  Tcl_DString *pqString = stringify_PQresultStatus(nspgConn->res); 
-  if(pqString)
-    {
-      Tcl_AppendResult(interp, Tcl_DStringValue(pqString), NULL);
-      Tcl_DStringFree(pqString);
-      free(pqString);
-    }
+  
+  Tcl_DString pqString;
+  Tcl_DStringInit(&pqString);
+
+  append_PQresultStatus(&pqString, nspgConn->res); 
+
+  Tcl_AppendResult(interp, Tcl_DStringValue(&pqString), NULL);
+  Tcl_DStringFree(&pqString);
 
   Tcl_AppendResult(interp, "SQL: ", sql, "\n", NULL);
 
