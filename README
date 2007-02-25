@@ -56,3 +56,10 @@ Run 'make help' for developer information.
 
 See the Makefile for further information on building this module.
 
+Note additions to build system (made in 2007):
+
+  make POSTGRES=SEPARATELY PGINC=... PGLIB=...
+  make POSTGRES=PG_CONFIG
+  make POSTGRES=PG_CONFIG PG_CONFIG=/path/to/pg_config
+
+

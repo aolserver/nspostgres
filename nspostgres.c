@@ -518,52 +518,44 @@ Ns_PgSelect(Ns_DbHandle *handle, char *sql) {
             }
             
         } else {
-	  Tcl_DString pqString;
-	  Tcl_DStringInit(&pqString);
-	  
-	  append_PQresultStatus(&pqString, nspgConn->res);
+	  Tcl_DString errString;
+	  Tcl_DStringInit(&errString);
 
-	  Ns_Log
-	    (
-	      Error, 
+	  Tcl_DStringAppend(&errString, "\nNs_PgSelect(", -1);
+	  Tcl_DStringAppend(&errString, handle->datasource, -1);
+	  Tcl_DStringAppend(&errString, "):  Query did not return rows\n", -1);
 
-	      "\nNs_PgSelect(%s):  Query did not return rows\n"
-	      "%s"
-	      "SQL:  %s",
+	  if(handle->verbose)
+	    {
+	      append_PQresultStatus(&errString, nspgConn->res);
 
-	      handle->datasource,
+	      Tcl_DStringAppend(&errString, "SQL:  ", -1);
+	      Tcl_DStringAppend(&errString, sql, -1);
+	    }
 
-	      Tcl_DStringValue(&pqString),
+	  Ns_Log(Error, "%s", Tcl_DStringValue(&errString));
 
-	      sql
-	    );
-
-	  Tcl_DStringFree(&pqString);
+	  Tcl_DStringFree(&errString);
         }
     } else {
       // Ns_PgExec returned NS_ERROR
 
-      Tcl_DString pqString;
-      Tcl_DStringInit(&pqString);
-
-      append_PQresultStatus(&pqString, nspgConn->res);
+      Tcl_DString errString;
+      Tcl_DStringInit(&errString);
       
-      Ns_Log
-        (
-	  Error, 
+      Tcl_DStringAppend(&errString, "\nNs_PgSelect(", -1);
+      Tcl_DStringAppend(&errString, handle->datasource, -1);
+      Tcl_DStringAppend(&errString, "):  Ns_PgExec returned NS_ERROR\n", -1);
+      
+      if(handle->verbose)
+	{
+	  append_PQresultStatus(&errString, nspgConn->res);
 	  
-	  "\nNs_PgSelect(%s):  Ns_PgExec returned NS_ERROR\n"
-	  "%s"
-	  "SQL:  %s",
-	  
-	  handle->datasource,
-	  
-	  Tcl_DStringValue(&pqString),
-	  
-	  sql
-	);
-
-      Tcl_DStringFree(&pqString);
+	  Tcl_DStringAppend(&errString, "SQL:  ", -1);
+	  Tcl_DStringAppend(&errString, sql, -1);
+	}
+      
+      Ns_Log(Error, "%s", Tcl_DStringValue(&errString));
     }
   done:
     return (row);
@@ -885,23 +877,27 @@ blob_get(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id)
 		char	buf[6001];
 
 		sprintf(segment_pos, "%d", segment);
+
 		if (Ns_PgExec(handle, query) != NS_ROWS) {
-			Tcl_AppendResult(interp, "Error selecting data from BLOB", NULL);
+		  Tcl_DString errString;
+		  Tcl_DStringInit(&errString);
+		  
+		  Tcl_DStringAppend
+		    (&errString, "Error selecting data from BLOB\n", -1);
+		  
+		  if(handle->verbose)
+		    {
+		      append_PQresultStatus(&errString, nspgConn->res);
+		      
+		      Tcl_DStringAppend(&errString, "SQL:  ", -1);
+		      Tcl_DStringAppend(&errString, query, -1);
+		    }
 
-			/*
-			 * append the result status
-			 */
-			Tcl_DString pqString;
-			Tcl_DStringInit(&pqString);
-			
-			append_PQresultStatus(&pqString, nspgConn->res); 
-			
-			Tcl_AppendResult
-			  (interp, Tcl_DStringValue(&pqString), NULL);
-			
-			Tcl_DStringFree(&pqString);
-
-			return TCL_ERROR;
+		  Tcl_AppendResult(interp, Tcl_DStringValue(&errString), NULL);
+		  
+		  Tcl_DStringFree(&errString);
+		  
+		  return TCL_ERROR;
 		}
 
 		if (PQntuples(nspgConn->res) == 0) break;
@@ -988,23 +984,27 @@ blob_put(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 		}
 		out_buf[j] = '\0';
 		sprintf(segment_pos, "%d, %d, '%s')", segment, segment_len, out_buf);
-		if (Ns_PgExec(handle, query) != NS_DML) {
-			Tcl_AppendResult(interp, "Error inserting data into BLOB", NULL);
 
-			/*
-			 * append the result status
-			 */
-			Tcl_DString pqString;
-			Tcl_DStringInit(&pqString);
-			
-			append_PQresultStatus(&pqString, nspgConn->res); 
-			
-			Tcl_AppendResult
-			  (interp, Tcl_DStringValue(&pqString), NULL);
-			
-			Tcl_DStringFree(&pqString);
-			
-			return TCL_ERROR;
+		if (Ns_PgExec(handle, query) != NS_DML) {
+		  Tcl_DString errString;
+		  Tcl_DStringInit(&errString);
+		  
+		  Tcl_DStringAppend
+		    (&errString, "Error inserting data into BLOB\n", -1);
+		  
+		  if(handle->verbose)
+		    {
+		      append_PQresultStatus(&errString, nspgConn->res);
+		      
+		      Tcl_DStringAppend(&errString, "SQL:  ", -1);
+		      Tcl_DStringAppend(&errString, query, -1);
+		    }
+
+		  Tcl_AppendResult(interp, Tcl_DStringValue(&errString), NULL);
+		  
+		  Tcl_DStringFree(&errString);
+		  
+		  return TCL_ERROR;
 		}
         value_ptr += segment_len;
 		segment++;
@@ -1051,19 +1051,25 @@ blob_dml_file(Tcl_Interp *interp, Ns_DbHandle *handle, char* blob_id,
 		out_buf[j] = '\0';
 		sprintf(segment_pos, "%d, %d, '%s')", segment, readlen, out_buf);
 		if (Ns_PgExec(handle, query) != NS_DML) {
-			Tcl_AppendResult(interp, "Error inserting data into BLOB", NULL);
+		  Tcl_DString errString;
+		  Tcl_DStringInit(&errString);
+		  
+		  Tcl_DStringAppend
+		    (&errString, "Error inserting data into BLOB\n", -1);
+		  
+		  if(handle->verbose)
+		    {
+		      append_PQresultStatus(&errString, nspgConn->res);
+		      
+		      Tcl_DStringAppend(&errString, "SQL:  ", -1);
+		      Tcl_DStringAppend(&errString, query, -1);
+		    }
 
-			Tcl_DString pqString;
-			Tcl_DStringInit(&pqString);
-			
-			append_PQresultStatus(&pqString, nspgConn->res); 
-			
-			Tcl_AppendResult
-			  (interp, Tcl_DStringValue(&pqString), NULL);
-	  
-			Tcl_DStringFree(&pqString);
-
-			return TCL_ERROR;
+		  Tcl_AppendResult(interp, Tcl_DStringValue(&errString), NULL);
+		  
+		  Tcl_DStringFree(&errString);
+		  
+		  return TCL_ERROR;
 		}
 		readlen = read(fd, in_buf, 6000);
 		segment++;
@@ -1147,17 +1153,24 @@ blob_send_to_stream(Tcl_Interp *interp, Ns_DbHandle *handle, char* lob_id,
 
     sprintf(segment_pos, "%d", segment);
     if (Ns_PgExec(handle, query) != NS_ROWS) {
-      Tcl_AppendResult(interp, "Error selecting data from BLOB", NULL);
-
-      Tcl_DString pqString;
-      Tcl_DStringInit(&pqString);
-
-      append_PQresultStatus(&pqString, nspgConn->res); 
+      Tcl_DString errString;
+      Tcl_DStringInit(&errString);
       
-      Tcl_AppendResult(interp, Tcl_DStringValue(&pqString), NULL);
+      Tcl_DStringAppend
+	(&errString, "Error selecting data from BLOB\n", -1);
+      
+      if(handle->verbose)
+	{
+	  append_PQresultStatus(&errString, nspgConn->res);
 	  
-      Tcl_DStringFree(&pqString);
-
+	  Tcl_DStringAppend(&errString, "SQL:  ", -1);
+	  Tcl_DStringAppend(&errString, query, -1);
+	}
+      
+      Tcl_AppendResult(interp, Tcl_DStringValue(&errString), NULL);
+      
+      Tcl_DStringFree(&errString);
+      
       return TCL_ERROR;
     }
 
@@ -1253,24 +1266,27 @@ DbFail(Tcl_Interp *interp, Ns_DbHandle *handle, char *cmd, char* sql)
     Tcl_AppendResult(interp, ")\n", NULL);
   }
 
-  pqerror = PQerrorMessage(nspgConn->conn);
-  if (pqerror != NULL && pqerror[0] != '\0') {
-    Tcl_AppendResult(interp, "pqerror was: \"", pqerror, "\"\n", NULL);
-  }
+  if(handle->verbose)
+    {
+      pqerror = PQerrorMessage(nspgConn->conn);
+      if (pqerror != NULL && pqerror[0] != '\0') {
+	Tcl_AppendResult(interp, "pqerror was: \"", pqerror, "\"\n", NULL);
+      }
 
-  /*
-   * append the result status
-   */
+      /*
+       * append the result status
+       */
   
-  Tcl_DString pqString;
-  Tcl_DStringInit(&pqString);
+      Tcl_DString pqString;
+      Tcl_DStringInit(&pqString);
+      
+      append_PQresultStatus(&pqString, nspgConn->res); 
+      
+      Tcl_AppendResult(interp, Tcl_DStringValue(&pqString), NULL);
+      Tcl_DStringFree(&pqString);
 
-  append_PQresultStatus(&pqString, nspgConn->res); 
-
-  Tcl_AppendResult(interp, Tcl_DStringValue(&pqString), NULL);
-  Tcl_DStringFree(&pqString);
-
-  Tcl_AppendResult(interp, "SQL: ", sql, "\n", NULL);
+      Tcl_AppendResult(interp, "SQL: ", sql, "\n", NULL);
+    }
 
   Ns_Free(sql);
 
