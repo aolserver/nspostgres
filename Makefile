@@ -35,17 +35,10 @@
 #      PostgreSQL Database Driver for AOLserver
 #
 
-# ONLY if POSTGRES never received a value, do we try to find a postgres
-# installation by setting the value of POSTGRES. Having determined no previous
-# value for POSTGRES, we try two things: the first, postgres's default --prefix
-# setting; if that fails we try the second, our LSB setting.
-
-ifndef POSTGRES
-  POSTGRES=/usr/local/pgsql
-  ifneq ($(shell [ -f $(POSTGRES)/include/libpq-fe.h ] && echo ok),ok)
-    POSTGRES = LSB
-  endif
-endif
+# if POSTGRES does not receive a value, print message showing choices.
+# 
+# the best choice for POSTGRES should be PG_CONFIG, but there has to be
+# a way to show the choices: so do NOT set POSTGRES here.
 
 ifdef INST
   NSHOME ?= $(INST)
@@ -184,18 +177,25 @@ check-env:
 	    echo "** POSTGRES variable not set."; \
 	    echo "** nspostgres.so will not be built."; \
 	    echo "** "; \
-	    echo "** Usage: make POSTGRES=/path/to/postgresql"; \
+	    echo "** Usage: make POSTGRES=PG_CONFIG"; \
+	    echo "**        make POSTGRES=PG_CONFIG PG_CONFIG=/path/to/pg_config"; \
 	    echo "**        make POSTGRES=LSB"; \
-	    echo "**        make POSTGRES=PG_CONFIG"; \
-	    echo "**        make POSTGRES=SEPARATELY PGLIB=/path/to/libs PGINC=/wheres/the/includes" \
+	    echo "**        make POSTGRES=/path/to/postgresql"; \
+	    echo "**        make POSTGRES=SEPARATELY \\"; \
+	    echo "               PGLIB=/path/to/libs \\"; \
+	    echo "               PGINC=/wheres/the/includes"; \
 	    echo "** "; \
-	    echo "** Usage: make install POSTGRES=/path/to/postgresql INST=/path/to/aolserver"; \
-	    echo "**        make install POSTGRES=LSB INST=/path/to/aolserver"; \
-	    echo "**        make install POSTGRES=PG_CONFIG"; \
+	    echo "** Usage: make install POSTGRES=PG_CONFIG"; \
+	    echo "**        make install POSTGRES=PG_CONFIG PG_CONFIG=/path/to/pg_config"; \
+	    echo "**        make install POSTGRES=LSB"; \
+	    echo "**        make install POSTGRES=/path/to/postgresql"; \
 	    echo "**        make install POSTGRES=SEPARATELY \\"; \
 	    echo "                       PGLIB=/path/to/libs \\"; \
-	    echo "                       PGINC=/wheres/the/includes \\"; \
-	    echo "                   INST=/path/to/aolserver"; \
+	    echo "                       PGINC=/wheres/the/includes"; \
+	    echo "** "; \
+	    echo "** if this dir is not at root of aolserver source tree,"; \
+	    echo "**   then you need to add INST=/path/to/aolserver--prefix"; \
+	    echo "**   and that dir must have aolserver installed in it"; \
 	    echo "** "; \
 	    echo "** OpenACS users should also set ACS=1"; \
 	    echo "** "; \

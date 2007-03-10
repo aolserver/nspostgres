@@ -1,3 +1,7 @@
+2007-03-09  Jim Lynch <jim@jam.sessionsnet.org>
+	* backed out of defaulting POSTGRES var in Makefile; it should print a 
+	message if not defined.
+
 2007-02-17  Jim Lynch <jim@jam.sessionsnet.org>
 	* changed functionality and name of new function from two commits ago;
 	it now appends to an existing string rather than allocates and returns
