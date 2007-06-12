@@ -21,8 +21,8 @@ How does it work?
 
 Driver modules look much like ordinary AOLserver modules but are
 loaded differently.  Instead of being listed with other modules in the
-[ns\server\<server-name>\modules] configuration section, a database
-driver is listed in the [ns\db\drivers] section and nsdb does
+[ns/server/<server-name>/modules] configuration section, a database
+driver is listed in the [ns/db/drivers] section and nsdb does
 the loading.  The database driver initialization function normally does
 little more than call the nsdb Ns_DbRegisterDriver() function with an
 array of pointers to functions.  The functions are then later used by
@@ -61,5 +61,4 @@ Note additions to build system (made in 2007):
   make POSTGRES=SEPARATELY PGINC=... PGLIB=...
   make POSTGRES=PG_CONFIG
   make POSTGRES=PG_CONFIG PG_CONFIG=/path/to/pg_config
-
 
