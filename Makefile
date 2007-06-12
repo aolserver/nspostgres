@@ -35,30 +35,16 @@
 #      PostgreSQL Database Driver for AOLserver
 #
 
-# if POSTGRES does not receive a value, print message showing choices.
-# 
-# the best choice for POSTGRES should be PG_CONFIG, but there has to be
-# a way to show the choices: so do NOT set POSTGRES here.
-
-ifdef INST
-  NSHOME ?= $(INST)
-else
-  ifeq ($(shell [ -f ../include/Makefile.module ] && echo ok),ok)
-    NSHOME = ..
-    NSBUILD = 1
-  else
-    NSHOME=/usr/local/aolserver
-    ifneq ($(shell [ -f $(NSHOME)/include/Makefile.module ] && echo ok),ok)
-      NSHOME = ../aolserver
-    endif
-  endif
-endif
-
 #
 # Version number used in release tags. Valid VERs are "1.1c", "2.1", 
 # "2.2beta7". VER "1.1c" will be translated into "v1_1c" by this Makefile.
 #
 VER_ = $(subst .,_,$(VER))
+
+# if POSTGRES does not receive a value, print message showing choices.
+# 
+# the best choice for POSTGRES should be PG_CONFIG, but there has to be
+# a way to show the choices: so do NOT set POSTGRES here.
 
 #
 # Manage to find PostgreSQL components in the system, or where you specify
@@ -84,6 +70,11 @@ else
 endif
  
 #
+# Where is AOLserver source?
+#
+AOLSERVER ?= ../aolserver
+
+#
 # Module name
 # 
 MOD       = nspostgres.so
@@ -91,7 +82,7 @@ MOD       = nspostgres.so
 #
 # Objects to build
 #
-OBJS      = nspostgres.o
+MODOBJS   = nspostgres.o
 
 #
 # Header files for this module
@@ -101,11 +92,7 @@ HDRS      = nspostgres.h
 #
 # Libraries required by this module
 #
-MODLIBS   = -L$(PGLIB) -lpq
-
-ifndef AS3
-    MODLIBS  +=  -lnsdb
-endif
+MODLIBS  += -L$(PGLIB) -lpq
 
 #
 # If PostgreSQL was compiled with OpenSSL support, you'll need to point the
@@ -115,18 +102,20 @@ ifdef OPENSSL
     MODLIBS += -L$(OPENSSL)/lib -lssl -lcrypto
 endif
 
+#
+# Compiler flags
+#
 CFLAGS   += -DBIND_EMULATION -I$(PGINC)
 
 #
 # ACS users should set ACS=1
 #
-ifdef ACS
 ifeq ($(ACS),1)
     CFLAGS   +=  -DFOR_ACS_USE
 endif
-endif
 
-include  $(NSHOME)/include/Makefile.module
+
+include  $(AOLSERVER)/include/Makefile.module
 
 #
 # Help the poor developer
