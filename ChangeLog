@@ -1,3 +1,15 @@
+2007-06-12  tag nspostgres_v4_r1
+
+2007-06-12  Dossy Shiobara <dossy@panoptic.com>
+
+	* Makefile (1.21): Updated Makefile to use AOLSERVER variable
+	  (NSHOME is deprecated at this point).  Removed -lnsdb, as it
+	  builds against AOLserver 4.0.10 without it, for me at least.
+
+2007-06-12  Dossy Shiobara <dossy@panoptic.com>
+
+	* README (1.6): Correct backslashes with forward slashes.
+
 2007-03-09  Jim Lynch <jim@jam.sessionsnet.org>
 	* backed out of defaulting POSTGRES var in Makefile; it should print a 
 	message if not defined.
