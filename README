@@ -62,3 +62,7 @@ Note additions to build system (made in 2007):
   make POSTGRES=PG_CONFIG
   make POSTGRES=PG_CONFIG PG_CONFIG=/path/to/pg_config
 
+NOTE NOTE NOTE!! As of aolserver-4.5.x, the variable INST is used for
+a different purpose than it used to be, so DO NOT set it to the installation
+dir!!
+
